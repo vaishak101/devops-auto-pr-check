@@ -33,7 +33,8 @@ jobs:
           current_branch="${GITHUB_REF#refs/heads/}"
 
           # Check if the current branch is behind the target branch
-          if [ "$(git rev-list origin/$target_branch...$GITHUB_SHA | wc -l)" -gt 0 ]; then
+          behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
+          if [ "$behind_count" -gt 0 ]; then
             echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
             exit 1
           fi
