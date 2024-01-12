@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up GitHub CLI
         run: |
@@ -31,21 +33,13 @@ jobs:
         run: |
           target_branch="dev"
           current_branch="${GITHUB_REF#refs/heads/}"
-          
+
           # Check if the current branch is behind the target branch
-          echo "Git Rev-List Output:"
-          git rev-list --left-right --count origin/dev...origin/$current_branch
-          
-          behind_count=$(git rev-list --left-right --count origin/dev...origin/$current_branch | cut -f1)
-          echo "Behind Count: $behind_count"
-          
+          behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
           if [ "$behind_count" -gt 0 ]; then
             echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
             exit 1
           fi
-
-
-
 
       - name: Create Pull Request
         run: |
