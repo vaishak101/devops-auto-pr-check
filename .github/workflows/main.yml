@@ -34,15 +34,16 @@ jobs:
           
           # Check if the current branch is behind the target branch
           echo "Git Rev-List Output:"
-          git rev-list --left-right --count origin/dev...$GITHUB_SHA
+          git rev-list --left-right --count origin/dev...origin/$current_branch
           
-          behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
+          behind_count=$(git rev-list --left-right --count origin/dev...origin/$current_branch | cut -f1)
           echo "Behind Count: $behind_count"
           
           if [ "$behind_count" -gt 0 ]; then
             echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
             exit 1
           fi
+
 
 
 
