@@ -13,18 +13,31 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up GitHub CLI
         run: |
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Check branch sync
+      - name: Debug Output
         run: |
-          git fetch origin dev
+          echo "Current Branch: ${GITHUB_REF#refs/heads/}"
+          git log --oneline -n 5  # Show the last 5 commits for debugging
+          git fetch origin dev   # Fetch the latest changes from dev for debugging
+          git log --oneline -n 5  # Show the last 5 commits after fetching
+          echo "HEAD: $GITHUB_SHA"
+          echo "Origin/dev: $(git rev-parse origin/dev)"
+
+      - name: Check if branch is behind Dev
+        run: |
+          target_branch="dev"
           current_branch="${GITHUB_REF#refs/heads/}"
-          behind_count=$(git rev-list --left-right --count origin/dev...HEAD | cut -f2)
+
+          # Check if the current branch is behind the target branch
+          behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
           if [ "$behind_count" -gt 0 ]; then
-            echo "Error: The $current_branch branch is behind dev. Please sync the $current_branch branch to dev before pushing changes."
+            echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
             exit 1
           fi
 
