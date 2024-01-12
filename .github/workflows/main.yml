@@ -1,0 +1,42 @@
+name: Auto Create and Merge Pull Request
+
+on:
+  push:
+    branches:
+      - feature
+      - bugs
+
+jobs:
+  create-and-merge-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up GitHub CLI
+        run: |
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Check branch sync
+        run: |
+          git fetch origin dev
+          current_branch="${GITHUB_REF#refs/heads/}"
+          behind_count=$(git rev-list --left-right --count origin/dev...HEAD | cut -f2)
+          if [ "$behind_count" -gt 0 ]; then
+            echo "Error: The $current_branch branch is behind dev. Please sync the $current_branch branch to dev before pushing changes."
+            exit 1
+          fi
+
+      - name: Create Pull Request
+        run: |
+          git config --global user.email "vaishak101@gmail.com"
+          git config --global user.name "Vaishak Nair"
+
+          target_branch="dev"
+
+          gh pr create --base "$target_branch" --head "${GITHUB_REF#refs/heads/}" --title "Auto-generated Pull Request" --body "This pull request is automatically generated."
+
+      - name: Merge Pull Request
+        run: |
+          gh pr merge --auto --merge "$target_branch"
