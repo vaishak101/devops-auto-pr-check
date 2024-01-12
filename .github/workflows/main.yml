@@ -25,7 +25,7 @@ jobs:
         run: |
           target_branch="dev"
           current_branch="${GITHUB_REF#refs/heads/}"
-
+      
           # Check if the current branch is behind the target branch
           behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
           if [ "$behind_count" -gt 0 ]; then
