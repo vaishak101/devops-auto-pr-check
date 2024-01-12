@@ -21,7 +21,6 @@ jobs:
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Check if branch is behind Dev
-        id: check_behind
         run: |
           target_branch="dev"
           current_branch="${GITHUB_REF#refs/heads/}"
@@ -30,8 +29,10 @@ jobs:
           behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
           if [ "$behind_count" -gt 0 ]; then
             echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
-            echo "Workflow failed: The branch is behind dev. Please sync the branch before pushing changes." > failure_message.txt
-            gh issue comment ${{ github.event.issue.number }} --body "$(cat failure_message.txt)"
+            
+            # Create a GitHub issue for the user to sync the branch
+            gh issue create --title "Branch Out of Sync" --body "The $current_branch branch is behind $target_branch. Please sync the branch before pushing changes."
+            
             exit 1
           fi
 
