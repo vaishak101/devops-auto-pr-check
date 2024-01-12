@@ -30,6 +30,8 @@ jobs:
           behind_count=$(git rev-list --left-right --count origin/dev...$GITHUB_SHA | cut -f1)
           if [ "$behind_count" -gt 0 ]; then
             echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
+            echo "Workflow failed: The branch is behind dev. Please sync the branch before pushing changes." > failure_message.txt
+            gh issue comment ${{ github.event.issue.number }} --body "$(cat failure_message.txt)"
             exit 1
           fi
 
@@ -45,9 +47,3 @@ jobs:
       - name: Merge Pull Request
         run: |
           gh pr merge --auto --merge "$target_branch"
-
-      - name: Notify on Failure
-        if: steps.check_behind.outcome == 'failure'
-        run: |
-          echo "Workflow failed: The branch is behind dev. Please sync the branch before pushing changes." > failure_message.txt
-          gh issue comment ${{ github.event.issue.number }} --body "$(cat failure_message.txt)"
