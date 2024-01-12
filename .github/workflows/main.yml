@@ -18,13 +18,23 @@ jobs:
         run: |
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Check branch sync
+      - name: Debug Output
         run: |
-          git fetch origin dev
+          echo "Current Branch: ${GITHUB_REF#refs/heads/}"
+          git log --oneline -n 5  # Show the last 5 commits for debugging
+          git fetch origin dev   # Fetch the latest changes from dev for debugging
+          git log --oneline -n 5  # Show the last 5 commits after fetching
+          echo "HEAD: $(git rev-parse HEAD)"
+          echo "Origin/dev: $(git rev-parse origin/dev)"
+
+      - name: Check if branch is behind Dev
+        run: |
+          target_branch="dev"
           current_branch="${GITHUB_REF#refs/heads/}"
-          behind_count=$(git rev-list --left-right --count origin/dev...HEAD | cut -f2)
-          if [ "$behind_count" -gt 0 ]; then
-            echo "Error: The $current_branch branch is behind dev. Please sync the $current_branch branch to dev before pushing changes."
+
+          # Check if the current branch is behind the target branch
+          if [ "$(git rev-list origin/$target_branch...HEAD | wc -l)" -gt 0 ]; then
+            echo "Error: The $current_branch branch is behind $target_branch. Please sync the $current_branch branch to dev before pushing changes."
             exit 1
           fi
 
